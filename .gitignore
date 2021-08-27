@@ -1,4 +1,4 @@
 *.ipynb
 **/17_flowers/*
 **/monkey_breed/*
-flower_classifer_vgg16.h5
+./flower_classifier_vgg16.h5
