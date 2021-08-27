@@ -1,8 +1,13 @@
+import os
+
 from tensorflow.keras.applications import MobileNet
+from tensorflow.keras.callbacks import EarlyStopping, ModelCheckpoint
 from tensorflow.keras.layers import Dense, GlobalAveragePooling2D
 from tensorflow.keras.models import Model
-import os
+from tensorflow.keras.optimizers import RMSprop
 from tensorflow.keras.preprocessing.image import ImageDataGenerator
+from tensorflow.python.keras.optimizer_v2.rmsprop import RMSProp
+
 
 def add_top_model(base_model, num_classes):
     top_model = base_model.output
@@ -47,6 +52,7 @@ validation_data_gen = ImageDataGenerator(
     rescale=1./255)
 
 batch_size = 32
+epochs = 5
 
 train_generator = train_data_gen.flow_from_directory(
     train_data_dir,
@@ -59,3 +65,34 @@ validation_generator = validation_data_gen.flow_from_directory(
     target_size=(img_rows, img_cols),
     batch_size=batch_size,
     class_mode='categorical')
+
+
+checkpoint = ModelCheckpoint("monkey_breed_mobileNet.h5",
+                             monitor="val_loss",
+                             mode="min",
+                             save_best_only = True,
+                             verbose=1)
+
+earlystop = EarlyStopping(monitor = 'val_loss', 
+                          min_delta = 0, 
+                          patience = 3,
+                          verbose = 1,
+                          restore_best_weights = True)
+
+callbacks = [checkpoint, earlystop]
+
+model.compile(loss = 'categorical_crossentropy',
+              optimizer = RMSprop(lr = 0.001),
+              metrics = ['accuracy'])
+
+
+nb_train_samples = 1098
+nb_validation_samples = 272
+
+history = model.fit_generator(
+    train_generator,
+    steps_per_epoch = nb_train_samples // batch_size,
+    epochs = epochs,
+    callbacks = callbacks,
+    validation_data = validation_generator,
+    validation_steps = nb_validation_samples // batch_size)
